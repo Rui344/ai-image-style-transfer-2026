@@ -7,15 +7,15 @@ import os
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 限制16MB
-# 允许的图片类型
+# 允许的图片类型*
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'bmp', 'gif'}
 
 # ==================== 填写你的信息 ====================
 NAME = "黄蕊"
 STUDENT_ID = "202335020614"
 # 百度AI开放平台密钥
-API_KEY = "gHLox0TOB0Eky1EJZveNbOMY"
-SECRET_KEY = "fdN8mvwFnrHqwj8K4gy3hLuBRnCxNh5w"
+API_KEY = "请输入你的API_KEY"
+SECRET_KEY = "请输入你的SECRET_KEY"
 
 
 # ======================================================
