@@ -1,8 +1,8 @@
 # 百度智能云 AI 多功能识别系统
 
 ## 个人信息
-学号：202335020614
-姓名：黄蕊
+学号：2023xxxxxxxx
+姓名：xx
 
 ## 项目介绍
 本项目基于百度智能云 AI 开放平台接口，使用 Python + Flask 搭建 Web 平台，实现三大 AI 功能：
@@ -26,8 +26,3 @@
 - AI 接口：百度智能云 OCR / 图像识别 / 语音合成
 - 前端：HTML + JavaScript
 - 语音播放：pygame
-
-## 运行方法
-1. 安装依赖
-```bash
-pip install -r requirements.txt
