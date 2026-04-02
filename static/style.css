@@ -1,0 +1,26 @@
+.box{
+    max-width:600px;
+    margin:50px auto;
+    text-align:center;
+    font-family:Arial;
+}
+.info{
+    background:#f4f4f4;
+    padding:12px;
+    border-radius:8px;
+    margin:20px 0;
+    font-size:18px;
+}
+button{
+    padding:10px 20px;
+    background:#007bff;
+    color:white;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+img{
+    max-width:100%;
+    margin-top:20px;
+    border-radius:10px;
+}
