@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>百度AI风格迁移</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="box">
+        <h1>百度智能云 AI 风格迁移项目</h1>
+        <div class="info">
+            学号：{{ id }} &nbsp;&nbsp; 姓名：{{ name }}
+        </div>
+        <form id="form">
+            <input type="file" name="image" accept="image/*" required>
+            <button type="submit">开始转换</button>
+        </form>
+        <div id="result"></div>
+    </div>
+    <script>
+        const form = document.getElementById('form');
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            let fd = new FormData(form);
+            let res = await fetch('/predict', { method: 'POST', body: fd });
+            let data = await res.json();
+            if(data.status === 'ok'){
+                document.getElementById('result').innerHTML = `<img src="${data.url}" width="400">`;
+            }else{
+                alert(data.msg);
+            }
+        }
+    </script>
+</body>
+</html>
