@@ -1,69 +1,103 @@
 from flask import Flask, render_template, request, jsonify
 import requests
-import os
 import base64
+import pygame
+import time
+import os
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 限制16MB
+# 允许的图片类型
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'bmp', 'gif'}
 
-# ====================== 必须改成你自己的 ======================
-API_KEY = "这里填你的百度API Key"
-SECRET_KEY = "这里填你的百度Secret Key"
-# ==============================================================
+# ==================== 填写你的信息 ====================
+NAME = "黄蕊"
+STUDENT_ID = "202335020614"
+# 百度AI开放平台密钥
+API_KEY = "gHLox0TOB0Eky1EJZveNbOMY"
+SECRET_KEY = "fdN8mvwFnrHqwj8K4gy3hLuBRnCxNh5w"
 
-# 可调节参数
-STYLE = "anime"  # 风格：anime/cartoon/sketch/oil_painting
 
-# 创建静态文件夹
-if not os.path.exists("static"):
-    os.makedirs("static")
+# ======================================================
 
-# 获取百度AI token
-def get_token():
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+# 获取百度AI access_token
+def get_access_token():
     url = "https://aip.baidubce.com/oauth/2.0/token"
     data = {
         "grant_type": "client_credentials",
         "client_id": API_KEY,
         "client_secret": SECRET_KEY
     }
-    res = requests.post(url, data=data).json()
-    return res.get("access_token")
+    return requests.post(url, data=data).json()["access_token"]
 
-# 首页（显示学号姓名）
-@app.route('/')
+
+# OCR文字识别
+@app.route("/ocr", methods=["POST"])
+def ocr():
+    if 'img' not in request.files:
+        return jsonify({"error": "未上传文件"})
+    file = request.files['img']
+    if file.filename == '':
+        return jsonify({"error": "未选择文件"})
+    if not allowed_file(file.filename):
+        return jsonify({"error": "当前不支持该文件类型，请尝试其他文件"})
+
+    token = get_access_token()
+    img = file.read()
+    img_b64 = base64.b64encode(img).decode()
+    r = requests.post(
+        f"https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic?access_token={token}",
+        data={"image": img_b64}
+    )
+    return jsonify(r.json())
+
+
+# 图像物体识别
+@app.route("/detect", methods=["POST"])
+def detect():
+    if 'img' not in request.files:
+        return jsonify({"error": "未上传文件"})
+    file = request.files['img']
+    if file.filename == '':
+        return jsonify({"error": "未选择文件"})
+    if not allowed_file(file.filename):
+        return jsonify({"error": "当前不支持该文件类型，请尝试其他文件"})
+
+    token = get_access_token()
+    img = file.read()
+    img_b64 = base64.b64encode(img).decode()
+    r = requests.post(
+        f"https://aip.baidubce.com/rest/2.0/image-classify/v2/advanced_general?access_token={token}",
+        data={"image": img_b64}
+    )
+    return jsonify(r.json())
+
+
+# 语音合成
+@app.route("/voice", methods=["POST"])
+def voice():
+    token = get_access_token()
+    text = request.json["text"]
+    r = requests.post(
+        f"https://tsn.baidu.com/text2audio?lan=zh&ctp=1&cuid=1&tok={token}&tex={text}"
+    )
+    with open("voice.mp3", "wb") as f:
+        f.write(r.content)
+    pygame.mixer.init()
+    pygame.mixer.music.load("voice.mp3")
+    pygame.mixer.music.play()
+    time.sleep(2)
+    return jsonify({"msg": "播放成功"})
+
+
+@app.route("/")
 def index():
-    # ========== 学号姓名 ==========
-    student_id = "202335020614"
-    student_name = "黄蕊"
-    return render_template("index.html", id=student_id, name=student_name)
+    return render_template("index.html", name=NAME, sid=STUDENT_ID)
 
-# AI风格转换接口
-@app.route('/predict', methods=['POST'])
-def predict():
-    try:
-        file = request.files['image']
-        img_bytes = file.read()
-        base64_img = base64.b64encode(img_bytes).decode()
 
-        token = get_token()
-        url = f"https://aip.baidubce.com/rest/2.0/image-process/v1/style_trans?access_token={token}"
-
-        data = {
-            "image": base64_img,
-            "style": STYLE
-        }
-
-        res = requests.post(url, data=data).json()
-
-        if "error_code" in res:
-            return jsonify({"status":"err","msg":res["error_msg"]})
-
-        img_data = base64.b64decode(res["image"])
-        with open("static/result.png","wb") as f:
-            f.write(img_data)
-
-        return jsonify({"status":"ok","url":"/static/result.png"})
-    except Exception as e:
-        return jsonify({"status":"err","msg":str(e)})
-
-if __name__ == '__main__':
-    app.run(host="0.0.0.0",port=5000,debug=True)
+if __name__ == "__main__":
+    app.run(debug=True)
