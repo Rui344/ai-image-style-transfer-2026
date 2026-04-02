@@ -2,32 +2,136 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>百度AI风格迁移</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>AI识别系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            padding: 30px;
+            font-family: Arial, sans-serif;
+        }
+        .title {
+            margin-bottom: 20px;
+        }
+        .info {
+            margin: 10px 0;
+            color: #666;
+        }
+        .upload-box {
+            margin: 20px 0;
+        }
+        #preview {
+            max-width: 400px;
+            max-height: 300px;
+            margin: 15px 0;
+            border: 1px solid #ddd;
+            display: none;
+        }
+        button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #eee;
+            min-height: 100px;
+            white-space: pre-wrap;
+        }
+    </style>
 </head>
 <body>
-    <div class="box">
-        <h1>百度智能云 AI 风格迁移项目</h1>
-        <div class="info">
-            学号：{{ id }} &nbsp;&nbsp; 姓名：{{ name }}
-        </div>
-        <form id="form">
-            <input type="file" name="image" accept="image/*" required>
-            <button type="submit">开始转换</button>
-        </form>
-        <div id="result"></div>
+    <h1 class="title">AI 多功能识别系统</h1>
+    <div class="info">姓名：{{ name }}</div>
+    <div class="info">学号：{{ sid }}</div>
+
+    <div class="upload-box">
+        <input type="file" id="imgFile" accept="image/*">
+        <img id="preview" alt="预览图">
     </div>
+
+    <div>
+        <button onclick="doOcr()">OCR文字识别</button>
+        <button onclick="doDetect()">物体识别</button>
+    </div>
+
+    <div>
+        <textarea id="text" rows="3" placeholder="输入文字进行语音合成" style="width: 400px; margin: 10px 0;"></textarea>
+        <button onclick="doVoice()">语音合成</button>
+    </div>
+
+    <div class="result" id="result"></div>
+
     <script>
-        const form = document.getElementById('form');
-        form.onsubmit = async (e) => {
-            e.preventDefault();
-            let fd = new FormData(form);
-            let res = await fetch('/predict', { method: 'POST', body: fd });
-            let data = await res.json();
-            if(data.status === 'ok'){
-                document.getElementById('result').innerHTML = `<img src="${data.url}" width="400">`;
-            }else{
-                alert(data.msg);
+        // 图片预览（显示上传的原图）
+        const imgFile = document.getElementById('imgFile');
+        const preview = document.getElementById('preview');
+
+        imgFile.addEventListener('change', function () {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 通用上传请求
+        async function upload(url) {
+            const file = imgFile.files[0];
+            if (!file) {
+                document.getElementById('result').innerText = '请先选择图片';
+                return;
+            }
+            const formData = new FormData();
+            formData.append('img', file);
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                document.getElementById('result').innerText = JSON.stringify(data, null, 2);
+            } catch (err) {
+                document.getElementById('result').innerText = '请求失败：' + err;
+            }
+        }
+
+        // OCR
+        function doOcr() {
+            upload('/ocr');
+        }
+
+        // 物体识别
+        function doDetect() {
+            upload('/detect');
+        }
+
+        // 语音合成
+        async function doVoice() {
+            const text = document.getElementById('text').value;
+            if (!text) {
+                document.getElementById('result').innerText = '请输入文字';
+                return;
+            }
+            try {
+                const res = await fetch('/voice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+                const data = await res.json();
+                document.getElementById('result').innerText = data.msg || '播放成功';
+            } catch (err) {
+                document.getElementById('result').innerText = '语音合成失败';
             }
         }
     </script>
